@@ -16,6 +16,7 @@
  *  * Pride ROYGBIV          - Vividly cycles sequentially through full Red, Orange, Yellow, Green, Blue, Violet.
  *  * Japanese Cherry Blossom- Soft, elegant pastel pinks, snowy whites, and rose-tinted blossom tones.
  *  * Primary Colors         - Direct, punchy alternation between pure Red, pure Blue, and pure Yellow.
+ *  * Blue Monday            - Moody, shifting layers of rich blues, ranging from crisp electric ice to deep midnight tones.
  *  =================================================================================
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -34,7 +35,7 @@ import groovy.json.JsonSlurper
 definition(
     name: "Dynamic Color Wave Lighting",
     namespace: "custom",
-    author: "Colin Ho",
+    author: "RichRich2112",
     description: "Simulates shifting ambient environments by cycling colors on selected color bulbs.",
     category: "Lighting",
     iconUrl: "",
@@ -60,7 +61,8 @@ preferences {
                 "Synthwave",
                 "Pride ROYGBIV",
                 "Japanese Cherry Blossom",
-                "Primary Colors"
+                "Primary Colors",
+                "Blue Monday"
             ]
     }
     section("") {
@@ -276,6 +278,10 @@ def auroraLoop() {
                 state.auroraBaseHue = 0 
                 state.auroraBaseSat = 100
                 break
+            case "Blue Monday":
+                state.auroraBaseHue = 64 // Pure blue baseline
+                state.auroraBaseSat = 95
+                break
             case "Aurora Borealis":
             default:
                 state.auroraBaseHue = 50 
@@ -396,6 +402,20 @@ def auroraLoop() {
                 else if (primaryRoll == 1) targetHue = 64 
                 else targetHue = 16                     
                 targetSat = 100
+                break
+
+            case "Blue Monday":
+                def blueRoll = step % 3
+                if (blueRoll == 0) {
+                    targetHue = 52  // Ice/Light Blue
+                    targetSat = 80
+                } else if (blueRoll == 1) {
+                    targetHue = 64  // True Medium Blue
+                    targetSat = 95
+                } else {
+                    targetHue = 69  // Deep Navy/Midnight Blue
+                    targetSat = 100
+                }
                 break
         }
 

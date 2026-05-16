@@ -28,6 +28,7 @@ It features robust event suppression to filter out self-generated Z-Wave/Zigbee 
 | **Pride ROYGBIV** | Vividly cycles sequentially through full Red, Orange, Yellow, Green, Blue, Violet. |
 | **Japanese Cherry Blossom** | Soft, elegant pastel pinks, snowy whites, and rose-tinted blossom tones. |
 | **Primary Colors** | Direct, punchy alternation between pure Red, pure Blue, and pure Yellow. |
+| **Blue Monday** | Moody, shifting layers of rich blues, ranging from crisp electric ice to deep midnight tones. |
 
 ---
 
