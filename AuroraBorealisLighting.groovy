@@ -310,10 +310,12 @@ def auroraLoop() {
 
     if (step < randomOrder.size()) {
         def bulb = randomOrder[step]
-        def targetHue = state.auroraBaseHue
-        def targetSat = state.auroraBaseSat
-        def targetLevel = baseLevel
         def theme = settings.colorScheme ?: "Aurora Borealis"
+        
+        // Armored fallback values setup explicitly before execution blocks
+        def targetHue = (theme == "Blue Monday") ? 62 : state.auroraBaseHue
+        def targetSat = (theme == "Blue Monday") ? 95 : state.auroraBaseSat
+        def targetLevel = baseLevel
 
         switch(theme) {
             case "Aurora Borealis":
@@ -407,15 +409,15 @@ def auroraLoop() {
             case "Blue Monday":
                 def blueRoll = step % 3
                 if (blueRoll == 0) {
-                    targetHue = 56  // Ice / Light Blue (safely past cyan/green)
+                    targetHue = 56  // Ice / Light Blue
                     targetSat = 85
                 } else if (blueRoll == 1) {
                     targetHue = 62  // Solid True Blue
                     targetSat = 95
                 } else {
-                    targetHue = 66  // Deep Rich Blue (capped to prevent shifting into purple)
-                    targetSat = 100 // Maximum color depth
-                    targetLevel = Math.max(10, (baseLevel * 0.75) as Integer) // Drops brightness slightly to create a true midnight shade
+                    targetHue = 66  // Deep Rich Blue
+                    targetSat = 100 
+                    targetLevel = Math.max(10, (baseLevel * 0.75) as Integer) 
                 }
                 break
         }
