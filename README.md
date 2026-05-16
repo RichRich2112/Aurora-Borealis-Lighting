@@ -2,7 +2,7 @@
 
 An advanced ambient lighting application for the Hubitat Elevation platform. This app creates immersive, shifting environments by dynamically cycling coordinated color profiles across your selected smart bulbs with smooth wave transitions. 
 
-It is designed to work seamlessly with **Z-Wave, Zigbee, and Matter RGBW bulbs**. It features robust event suppression to filter out self-generated commands across all protocols, an optional state capture/restore machine, physical button controllers to easily trigger or cancel the effects, and dynamic theme cycling via button holds with mobile push notifications.
+It is designed to work seamlessly with **Z-Wave, Zigbee, and Matter RGBW bulbs**. It features robust event suppression to filter out self-generated commands across all protocols, an optional state capture/restore machine, physical or virtual button controllers to easily trigger or cancel the effects, and dynamic theme cycling via button holds with mobile push notifications.
 
 ## Features
 
