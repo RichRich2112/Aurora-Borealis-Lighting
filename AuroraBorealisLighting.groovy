@@ -279,7 +279,7 @@ def auroraLoop() {
                 state.auroraBaseSat = 100
                 break
             case "Blue Monday":
-                state.auroraBaseHue = 64 // Pure blue baseline
+                state.auroraBaseHue = 62 // Pure blue baseline
                 state.auroraBaseSat = 95
                 break
             case "Aurora Borealis":
@@ -407,14 +407,15 @@ def auroraLoop() {
             case "Blue Monday":
                 def blueRoll = step % 3
                 if (blueRoll == 0) {
-                    targetHue = 52  // Ice/Light Blue
-                    targetSat = 80
+                    targetHue = 56  // Ice / Light Blue (safely past cyan/green)
+                    targetSat = 85
                 } else if (blueRoll == 1) {
-                    targetHue = 64  // True Medium Blue
+                    targetHue = 62  // Solid True Blue
                     targetSat = 95
                 } else {
-                    targetHue = 69  // Deep Navy/Midnight Blue
-                    targetSat = 100
+                    targetHue = 66  // Deep Rich Blue (capped to prevent shifting into purple)
+                    targetSat = 100 // Maximum color depth
+                    targetLevel = Math.max(10, (baseLevel * 0.75) as Integer) // Drops brightness slightly to create a true midnight shade
                 }
                 break
         }
