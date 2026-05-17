@@ -1,7 +1,7 @@
 /**
  * Dynamic Color Wave Lighting
  *
- * May 16, 2026
+ * May 17, 2026
  *
  * =================================================================================
  * AVAILABLE COLOR SCHEMES & DESCRIPTIONS:
@@ -355,8 +355,8 @@ def auroraLoop() {
     def rawLevel = settings.auroraLevel ?: 100
     def baseLevel = Math.max(1, Math.min(100, rawLevel as Integer))
 
-    // Armored initialization values to completely stop stale data bleed
-    def primeHue = (theme == "Blue Monday") ? 62 : state.auroraBaseHue
+    // Armored initialization values optimized for Linkind RGB spectrum
+    def primeHue = (theme == "Blue Monday") ? 63 : state.auroraBaseHue
     def primeSat = (theme == "Blue Monday") ? 95 : state.auroraBaseSat
 
     if (step == 0) {
@@ -474,15 +474,35 @@ def auroraLoop() {
             case "Blue Monday":
                 def blueRoll = step % 3
                 if (blueRoll == 0) {
-                    targetHue = 56  // Ice / Light Blue
-                    targetSat = 85
+                    // STEP 1: Calibrated Ice Blend (Blue LED + 6500K Cool White)
+                    targetHue = 64  
+                    targetSat = 40  
+                    
+                    // Drop the brightness heavily to compensate for the extra white LED output
+                    targetLevel = Math.max(10, (baseLevel * 0.25) as Integer)
+                    
+                    try {
+                        suppressEventsFor(bulb)
+                        setLastHue(bulb, targetHue as Double)
+                        bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel, colorTemperature: 6500])
+                    } catch (e) {
+                        // Fallback handling for stubborn drivers
+                        bulb.setColorTemperature(6500)
+                        bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
+                    }
                 } else if (blueRoll == 1) {
-                    targetHue = 62  // Solid True Blue
-                    targetSat = 95
+                    // STEP 2: Solid True Blue / Cobalt (RGB Only)
+                    targetHue = 63  
+                    targetSat = 95  
+                    targetLevel = baseLevel // Full base brightness
+                    bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
                 } else {
-                    targetHue = 66  // Deep Rich Blue
+                    // STEP 3: Deep Sapphire / Midnight Blue (RGB Only)
+                    targetHue = 67  
                     targetSat = 100 
-                    targetLevel = Math.max(10, (baseLevel * 0.75) as Integer) 
+                    // Dims the deep sapphire slightly for rich contrast, but keeps it higher than the ice step
+                    targetLevel = Math.max(15, (baseLevel * 0.70) as Integer) 
+                    bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
                 }
                 break
         }
