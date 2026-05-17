@@ -8,7 +8,7 @@
  * =================================================================================
  * * Aurora Borealis        - Cool greens, shifting teals, and occasional indigo/violet accents.
  * * Chinatown              - Deep striking reds, rich golds, and warm oranges cycling in waves.
- * * Ember & Hearth         - Slow amber-orange candle-like glow with structural flame flicker.
+ * * Ember & Hearth         - Slow amber-orange fireplace-like glow with structural flame flicker.
  * * Ocean Drift            - Calm aquamarine and sapphire deep blues shifting gently like water.
  * * Candlelight            - Ultra-warm white-to-gold tones with a delicate fluttering candle glow.
  * * Enchanted Forest       - Deep rich forest greens intertwined with dark, immersive woodland purples.
