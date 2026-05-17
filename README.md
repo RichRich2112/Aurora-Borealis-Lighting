@@ -52,7 +52,7 @@ It is designed to work seamlessly with **Z-Wave, Zigbee, and Matter RGBW bulbs**
 * **Theme Configuration:** Select your baseline profile.
 * **Set a bulb every (seconds):** The delay between updating individual bulbs in the sequence. Lower numbers make the "wave" move faster across your room.
 * **Then pause (seconds):** The wait time after an entire wave has rolled through before shuffling the device order and firing the next wave.
-* **Base Effect Brightness:** Sets the bulb brightness (dim) level (1-100%) for the bulbs. Profiles like *Candlelight* and *Ember & Hearth* will dynamically scale below this number to simulate physical flickering.
+* **Base Effect Brightness:** Sets the brightness (dim) level (1-100%) for the bulbs. Profiles like *Candlelight* and *Ember & Hearth* will dynamically scale below this number to simulate physical flickering.
 
 ### Automated Triggers & Notifications (Optional)
 * **Switch Control:** Associating
