@@ -364,8 +364,14 @@ def auroraLoop() {
             bulbs.each { bulb ->
                 try {
                     suppressEventsFor(bulb)
-                    setLastHue(bulb, primeHue as Double)
-                    bulb.setColor([hue: primeHue, saturation: primeSat, level: baseLevel])
+                    if (theme == "Candlelight") {
+                        clearLastHue(bulb)
+                        bulb.setColorTemperature(2200)
+                        bulb.setLevel(Math.max(6, (baseLevel * 0.35) as Integer))
+                    } else {
+                        setLastHue(bulb, primeHue as Double)
+                        bulb.setColor([hue: primeHue, saturation: primeSat, level: baseLevel])
+                    }
                 } catch (e) {
                     debugLog "setColor failed during prime for ${bulb.displayName}: ${e}"
                 }
@@ -373,7 +379,7 @@ def auroraLoop() {
             state.auroraFirstCyclePrime = false
         }
     }
-
+    
     if (step < randomOrder.size()) {
         def bulb = randomOrder[step]
         
@@ -414,9 +420,27 @@ def auroraLoop() {
                 break
 
             case "Candlelight":
-                targetHue = (8 + new Random().nextInt(6)) % 100
-                targetSat = 35 + new Random().nextInt(15) 
-                targetLevel = Math.max(20, baseLevel - new Random().nextInt(15)) 
+                // Shift strictly within Linkind's ultra-warm white hardware spectrum (2000K to 2400K)
+                def targetKelvin = 2000 + new Random().nextInt(400)
+                
+                // Scale base brightness back heavily so it stays an ambient, cozy glow
+                def candleBase = (baseLevel * 0.35) as Integer
+                
+                // Allow a deeper, faster drop to mimic a delicate, fluttering flame
+                targetLevel = Math.max(6, candleBase - new Random().nextInt(20)) 
+                
+                debugLog "Setting ${bulb.displayName} to Candle White: ${targetKelvin}K at level ${targetLevel}"
+                try {
+                    suppressEventsFor(bulb)
+                    // Clear out any stale RGB hue tracking to keep the driver clean
+                    clearLastHue(bulb)
+                    
+                    // Fire the explicit Color Temperature command to activate pure warm white hardware
+                    bulb.setColorTemperature(targetKelvin)
+                    bulb.setLevel(targetLevel)
+                } catch (e) {
+                    debugLog "Candlelight CT command failed: ${e}"
+                }
                 break
 
             case "Enchanted Forest":
