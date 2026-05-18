@@ -297,9 +297,10 @@ def auroraLoop() {
     def cyclePauseSec = settings.cyclePause ?: 3
     def bulbs = colorBulbs
     
-    def allColorBulbs = location.allDevices.findAll { it.hasCapability("ColorControl") }
-    def unselectedBulbs = allColorBulbs - bulbs
-    unselectedBulbs.each { it.off() }
+	// Do not affect any bulbs except the selected ones
+    // def allColorBulbs = location.allDevices.findAll { it.hasCapability("ColorControl") }
+    // def unselectedBulbs = allColorBulbs - bulbs
+    // unselectedBulbs.each { it.off() }
 
     if (!state.auroraStep) state.auroraStep = 0
     def step = state.auroraStep as Integer
