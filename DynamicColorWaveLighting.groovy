@@ -418,15 +418,25 @@ def auroraLoop() {
                 executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 break
 
-            case "Candlelight":
-                def targetKelvin = 2000 + new Random().nextInt(400)
-                def candleBase = (baseLevel * 0.35) as Integer
-                def targetLevel = Math.max(6, candleBase - new Random().nextInt(20)) 
+          case "Candlelight":
+                // Broadened spectrum: Shift strictly between your hardware's 1800K floor and a cozy 2500K. Check your bulb specifications and change this with the lowest capable Kelvin value (here we see it's 1800). Yours may be 2000 or ??
+                def targetKelvin = 1800 + new Random().nextInt(701)
                 
-                debugLog "Setting ${bulb.displayName} to Candle White: ${targetKelvin}K at level ${targetLevel}"
+                // Scale base brightness back so it stays an ambient, cozy glow
+                def candleBase = (baseLevel * 0.35) as Integer
+                
+                // Dynamic flame flicker: Allows a subtle, fluttering dimming effect
+                // Dips are shallower at the absolute lowest 1800K color temps to prevent a muddy look
+                def maxDip = (targetKelvin < 2000) ? 12 : 20
+                def targetLevel = Math.max(6, candleBase - new Random().nextInt(maxDip)) 
+                
+                debugLog "Setting ${bulb.displayName} to Ultra-Warm Candle White: ${targetKelvin}K at level ${targetLevel}"
                 try {
                     suppressEventsFor(bulb)
+                    // Clear out any stale RGB hue tracking to keep the driver clean
                     clearLastHue(bulb)
+                    
+                    // Fire the explicit Color Temperature command to activate pure ultra-warm hardware
                     bulb.setColorTemperature(targetKelvin)
                     bulb.setLevel(targetLevel)
                 } catch (e) {
