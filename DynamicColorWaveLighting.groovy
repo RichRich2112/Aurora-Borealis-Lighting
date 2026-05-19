@@ -1,7 +1,7 @@
 /**
  * Dynamic Color Wave Lighting
  *
- * May 17, 2026
+ * May 19, 2026
  *
  * =================================================================================
  * AVAILABLE COLOR SCHEMES & DESCRIPTIONS:
@@ -113,7 +113,6 @@ def initialize() {
     }
     if (startButtonDevice && startButtonAction && startButtonNumber) {
         subscribe(startButtonDevice, startButtonAction, onButtonEvent)
-        // Ensure app explicitly listens for the held action on our primary button device
         subscribe(startButtonDevice, "held", onButtonEvent)
     }
     if (stopButtonDevice && stopButtonAction && stopButtonNumber) {
@@ -130,7 +129,6 @@ def initialize() {
     state.auroraActive = false
     state.auroraFirstCyclePrime = true
     
-    // Explicitly purge stale color memories on initialization
     state.auroraBaseHue = null
     state.auroraBaseSat = null
     state.auroraStep = 0
@@ -160,12 +158,10 @@ void handleButtonEvent(evt, actionKey, numberKey, isStart) {
         debugLog "Exception parsing button number: ${e}"
     }
     
-    // Logic implementation: Intercept Hold action on designated cycle button mid-animation loop
     if (isStart && eventAction == "held" && eventBtnNum == (settings.cycleButtonNumber?.toInteger() ?: 1)) {
         if (state.auroraActive) {
             log.info "Theme cycle event matched via button hold."
             
-            // Hardcoded static tracker to prevent driver-exclusive getSettingDefinition missing method errors
             def themeList = [
                 "Aurora Borealis", 
                 "Chinatown", 
@@ -189,12 +185,10 @@ void handleButtonEvent(evt, actionKey, numberKey, isStart) {
             log.info "Cycling profile preference from '${settings.colorScheme}' to '${nextTheme}'"
             app.updateSetting("colorScheme", [type: "enum", value: nextTheme])
             
-            // Push notification logic wrapper
             if (notificationDevice) {
                 notificationDevice.deviceNotification("Dynamic Wave Lighting changed to: ${nextTheme}")
             }
             
-            // Rapid recalculation: Clear current pacing metrics but keep original saved baseline states safe
             unschedule()
             state.auroraStep = 0
             state.auroraOrder = null
@@ -210,7 +204,6 @@ void handleButtonEvent(evt, actionKey, numberKey, isStart) {
 
     if (settings.enableDebugLogging) log.debug "Comparing eventAction=${eventAction} to action=${action}, eventBtnNum=${eventBtnNum} to btnNum=${btnNum}"
     
-    // Fall back to standard Start/Stop button event checking
     if (eventAction == action && eventBtnNum == btnNum) {
         if (isStart) {
             debugLog "Button event matched, starting animation."
@@ -240,7 +233,6 @@ def onBulbStateChange(evt) {
     if (evt.name == 'switch' && evt.value == 'off') {
         debugLog "Bulb ${evt.device.displayName} reported OFF or cut power."
         
-        // Count how many selected bulbs are still physically reporting as 'on'
         def bulbsOn = colorBulbs.count { it.currentSwitch == "on" }
         debugLog "Active tracking check: ${bulbsOn} out of ${colorBulbs.size()} bulbs remain on."
         
@@ -249,7 +241,6 @@ def onBulbStateChange(evt) {
             stopAll()
         } else {
             log.info "A bulb cut power, but ${bulbsOn} bulbs are still active. Continuing wave on remaining devices."
-            // The loop will automatically bypass unresponsive devices on the next cycle iteration
         }
         return
     }
@@ -296,11 +287,6 @@ def auroraLoop() {
     def bulbIntervalMs = ((settings.bulbInterval ?: 3) * 1000).toInteger()
     def cyclePauseSec = settings.cyclePause ?: 3
     def bulbs = colorBulbs
-    
-	// Do not affect any bulbs except the selected ones
-    // def allColorBulbs = location.allDevices.findAll { it.hasCapability("ColorControl") }
-    // def unselectedBulbs = allColorBulbs - bulbs
-    // unselectedBulbs.each { it.off() }
 
     if (!state.auroraStep) state.auroraStep = 0
     def step = state.auroraStep as Integer
@@ -367,7 +353,6 @@ def auroraLoop() {
     def rawLevel = settings.auroraLevel ?: 100
     def baseLevel = Math.max(1, Math.min(100, rawLevel as Integer))
 
-    // Armored initialization values optimized for Linkind RGB spectrum
     def primeHue = (theme == "Blue Monday") ? 63 : state.auroraBaseHue
     def primeSat = (theme == "Blue Monday") ? 95 : state.auroraBaseSat
 
@@ -395,59 +380,53 @@ def auroraLoop() {
     if (step < randomOrder.size()) {
         def bulb = randomOrder[step]
         
-        // Armored fallback values setup explicitly before execution blocks
-        def targetHue = (theme == "Blue Monday") ? 62 : state.auroraBaseHue
-        def targetSat = (theme == "Blue Monday") ? 95 : state.auroraBaseSat
-        def targetLevel = baseLevel
-
+        // Execute theme logic safely. Non-standard commands complete execution cleanly inside their cases via 'return'.
         switch(theme) {
             case "Aurora Borealis":
+                def targetHue
                 def hueOffset = (step % 3 - 1) * (6 + new Random().nextInt(6))
                 if (new Random().nextInt(10) > 7) { 
                     targetHue = 78 
                 } else {
                     targetHue = (state.auroraBaseHue + hueOffset) % 100
                 }
-                targetSat = state.auroraBaseSat - new Random().nextInt(10)
+                def targetSat = state.auroraBaseSat - new Random().nextInt(10)
+                executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 break
 
             case "Chinatown":
+                def targetHue
                 def roll = step % 3
                 if (roll == 0) targetHue = 0      
                 else if (roll == 1) targetHue = 8  
                 else targetHue = 15                
-                targetSat = 95 - new Random().nextInt(10)
+                def targetSat = 95 - new Random().nextInt(10)
+                executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 break
 
             case "Ember & Hearth":
-                targetHue = (state.auroraBaseHue + new Random().nextInt(5)) % 100
-                targetSat = 90 - new Random().nextInt(10)
-                targetLevel = Math.max(15, baseLevel - new Random().nextInt(35)) 
+                def targetHue = (state.auroraBaseHue + new Random().nextInt(5)) % 100
+                def targetSat = 90 - new Random().nextInt(10)
+                def targetLevel = Math.max(15, baseLevel - new Random().nextInt(35)) 
+                executeColorCommand(bulb, theme, targetHue, targetSat, targetLevel)
                 break
 
             case "Ocean Drift":
                 def driftOffset = (step * 5) % 20
-                targetHue = (50 + driftOffset) % 100
-                targetSat = 85 + new Random().nextInt(15)
+                def targetHue = (50 + driftOffset) % 100
+                def targetSat = 85 + new Random().nextInt(15)
+                executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 break
 
             case "Candlelight":
-                // Shift strictly within Linkind's ultra-warm white hardware spectrum (2000K to 2400K)
                 def targetKelvin = 2000 + new Random().nextInt(400)
-                
-                // Scale base brightness back heavily so it stays an ambient, cozy glow
                 def candleBase = (baseLevel * 0.35) as Integer
-                
-                // Allow a deeper, faster drop to mimic a delicate, fluttering flame
-                targetLevel = Math.max(6, candleBase - new Random().nextInt(20)) 
+                def targetLevel = Math.max(6, candleBase - new Random().nextInt(20)) 
                 
                 debugLog "Setting ${bulb.displayName} to Candle White: ${targetKelvin}K at level ${targetLevel}"
                 try {
                     suppressEventsFor(bulb)
-                    // Clear out any stale RGB hue tracking to keep the driver clean
                     clearLastHue(bulb)
-                    
-                    // Fire the explicit Color Temperature command to activate pure warm white hardware
                     bulb.setColorTemperature(targetKelvin)
                     bulb.setLevel(targetLevel)
                 } catch (e) {
@@ -456,6 +435,7 @@ def auroraLoop() {
                 break
 
             case "Enchanted Forest":
+                def targetHue, targetSat
                 if (step % 2 == 0) {
                     targetHue = 33 + new Random().nextInt(6)
                     targetSat = 95
@@ -463,18 +443,21 @@ def auroraLoop() {
                     targetHue = 78 + new Random().nextInt(6)
                     targetSat = 85
                 }
-                targetLevel = Math.max(10, (baseLevel * 0.75) as Integer)
+                def targetLevel = Math.max(10, (baseLevel * 0.75) as Integer)
+                executeColorCommand(bulb, theme, targetHue, targetSat, targetLevel)
                 break
 
             case "Synthwave":
+                def targetHue
                 def synthRoll = step % 3
                 if (synthRoll == 0) targetHue = 92
                 else if (synthRoll == 1) targetHue = 76
                 else targetHue = 53
-                targetSat = 95
+                executeColorCommand(bulb, theme, targetHue, 95, baseLevel)
                 break
 
             case "Pride ROYGBIV":
+                def targetHue
                 def prideRoll = step % 6
                 if (prideRoll == 0) targetHue = 0     
                 else if (prideRoll == 1) targetHue = 7  
@@ -482,10 +465,11 @@ def auroraLoop() {
                 else if (prideRoll == 3) targetHue = 35 
                 else if (prideRoll == 4) targetHue = 64 
                 else targetHue = 79                     
-                targetSat = 100
+                executeColorCommand(bulb, theme, targetHue, 100, baseLevel)
                 break
 
             case "Japanese Cherry Blossom":
+                def targetHue, targetSat
                 def blossomRoll = step % 3
                 if (blossomRoll == 0) {
                     targetHue = 96 
@@ -497,60 +481,50 @@ def auroraLoop() {
                     targetHue = 10 
                     targetSat = 12
                 }
+                executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 break
 
             case "Primary Colors":
+                def targetHue
                 def primaryRoll = step % 3
                 if (primaryRoll == 0) targetHue = 0     
                 else if (primaryRoll == 1) targetHue = 64 
                 else targetHue = 16                     
-                targetSat = 100
+                executeColorCommand(bulb, theme, targetHue, 100, baseLevel)
                 break
 
             case "Blue Monday":
                 def blueRoll = step % 3
                 if (blueRoll == 0) {
-                    // STEP 1: Calibrated Ice Blend (Blue LED + 6500K Cool White)
-                    targetHue = 64  
-                    targetSat = 40  
-                    
-                    // Drop the brightness heavily to compensate for the extra white LED output
-                    targetLevel = Math.max(10, (baseLevel * 0.25) as Integer)
+                    def targetHue = 64  
+                    def targetSat = 40  
+                    def targetLevel = Math.max(10, (baseLevel * 0.25) as Integer)
                     
                     try {
                         suppressEventsFor(bulb)
                         setLastHue(bulb, targetHue as Double)
                         bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel, colorTemperature: 6500])
                     } catch (e) {
-                        // Fallback handling for stubborn drivers
                         bulb.setColorTemperature(6500)
                         bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
                     }
                 } else if (blueRoll == 1) {
-                    // STEP 2: Solid True Blue / Cobalt (RGB Only)
-                    targetHue = 63  
-                    targetSat = 95  
-                    targetLevel = baseLevel // Full base brightness
-                    bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
+                    def targetHue = 63  
+                    def targetSat = 95  
+                    executeColorCommand(bulb, theme, targetHue, targetSat, baseLevel)
                 } else {
-                    // STEP 3: Deep Sapphire / Midnight Blue (RGB Only)
-                    targetHue = 67  
-                    targetSat = 100 
-                    // Dims the deep sapphire slightly for rich contrast, but keeps it higher than the ice step
-                    targetLevel = Math.max(15, (baseLevel * 0.70) as Integer) 
-                    bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
+                    def targetHue = 67  
+                    def targetSat = 100 
+                    def targetLevel = Math.max(15, (baseLevel * 0.70) as Integer) 
+                    executeColorCommand(bulb, theme, targetHue, targetSat, targetLevel)
                 }
+                break
+                
+            default:
+                executeColorCommand(bulb, theme, state.auroraBaseHue, state.auroraBaseSat, baseLevel)
                 break
         }
 
-        debugLog "Setting ${bulb.displayName} [${theme}] to hue:${targetHue} sat:${targetSat} level:${targetLevel}"
-        try {
-            suppressEventsFor(bulb)
-            setLastHue(bulb, targetHue as Double)
-            bulb.setColor([hue: targetHue, saturation: targetSat, level: targetLevel])
-        } catch (e) {
-            debugLog "setColor failed for ${bulb.displayName}: ${e}"
-        }
         state.auroraStep = step + 1
         runInMillis(bulbIntervalMs, auroraLoop)
     } else {
@@ -559,6 +533,17 @@ def auroraLoop() {
         }
         resetCycleState()
         runIn(Math.round(cyclePauseSec) as int, auroraLoop)
+    }
+}
+
+private void executeColorCommand(bulb, String theme, int hue, int sat, int level) {
+    debugLog "Setting ${bulb.displayName} [${theme}] to hue:${hue} sat:${sat} level:${level}"
+    try {
+        suppressEventsFor(bulb)
+        setLastHue(bulb, hue as Double)
+        bulb.setColor([hue: hue, saturation: sat, level: level])
+    } catch (e) {
+        debugLog "setColor failed for ${bulb.displayName}: ${e}"
     }
 }
 
@@ -630,7 +615,7 @@ def onSwitchOff(evt) {
     debugLog "Control switch turned off. Stopping effect and turning off all lights."
     if (state.auroraActive) {
         state.auroraActive = false
-        state.auroraStarted = false
+        state.started = false
         unsubscribeBulbEvents()
     }
     if (colorBulbs) {
